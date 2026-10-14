@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f6feb">
+  <title>BBD Campus Navigator · Prototype</title>
+  <link rel="stylesheet" href="/src/styles/main.css"> 
+</head>
+<body>
+<div id="app">
+  <canvas id="c" aria-label="Interactive 3D campus map"></canvas>
+  <div id="top">
+    <h1>🏛️ BBD Campus Navigator</h1>
+    <button class="btn" id="bEv">Events</button>
+    <button class="btn" id="bChat" title="Ask the assistant">💬</button>
+    <button class="btn" id="bHelp" title="Help desk">🛟</button>
+    <button class="btn on" id="bSat" title="Simulated satellite style">🛰️</button>
+    <button class="btn" id="bAdd">+</button>
+  </div>
+  <div id="note" style="position:absolute;z-index:2;top:58px;left:10px;font-size:11px;color:#fff;background:rgba(18,38,63,.75);padding:3px 8px;border-radius:8px">🛰️ Simulated satellite style · real imagery needs online tiles</div>
+  <div id="hybrid-controls">
+    <button class="btn" id="show-campus">🏛️ Campus 3D</button>
+    <button class="btn" id="show-floor">🗺️ Floor plan + route</button>
+    <button class="btn" id="show-pano">🌐 360° checkpoint</button>
+  </div>
+  <section id="hybrid-view" aria-live="polite" aria-label="Hybrid navigation view">
+    <div class="view-head"><h2 id="hybrid-title">Floor plan</h2><button class="btn" id="close-hybrid">Close ×</button></div>
+    <div id="floor-tools"></div>
+    <div class="view-body"><div id="floor-map"></div><div id="pano-view" hidden></div></div>
+    <div class="view-foot" id="hybrid-foot">Illustrative demo layout — replace with verified campus data before relying on directions.</div>
+  </section>
+  <div id="sheet"></div>
+</div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

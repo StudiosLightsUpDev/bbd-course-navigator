@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="1024" viewBox="0 0 2048 1024">
+<defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#77bce8"/><stop offset="1" stop-color="#e4f3ff"/></linearGradient><linearGradient id="ground" x2="0" y2="1"><stop stop-color="#7ba66a"/><stop offset="1" stop-color="#3f6940"/></linearGradient></defs>
+<rect width="2048" height="700" fill="url(#sky)"/><rect y="700" width="2048" height="324" fill="url(#ground)"/>
+<path d="M0 710 L180 590 L340 680 L500 560 L700 690 L880 590 L1050 700 L1250 560 L1430 690 L1610 600 L1820 690 L2048 580 L2048 780 L0 780Z" fill="#7c927c"/>
+<g fill="#d8d5ca" stroke="#8b8e8b" stroke-width="8"><path d="M180 700V420H500V700Z"/><path d="M720 700V360H1090V700Z"/><path d="M1320 700V450H1640V700Z"/></g>
+<g fill="#557b9a"><path d="M220 470H460V500H220ZM220 540H460V570H220ZM220 610H460V640H220Z"/><path d="M770 410H1040V440H770ZM770 490H1040V520H770ZM770 570H1040V600H770Z"/><path d="M1360 500H1600V530H1360ZM1360 580H1600V610H1360Z"/></g>
+<g fill="#285b35"><circle cx="80" cy="720" r="48"/><circle cx="610" cy="760" r="58"/><circle cx="1160" cy="750" r="45"/><circle cx="1720" cy="740" r="58"/><circle cx="1950" cy="710" r="44"/></g>
+<path d="M0 890 Q512 820 1024 900 T2048 870" fill="none" stroke="#d3d0c5" stroke-width="65"/><path d="M0 890 Q512 820 1024 900 T2048 870" fill="none" stroke="#7b8183" stroke-width="5" stroke-dasharray="24 20"/>
+<text x="1024" y="120" text-anchor="middle" font-family="sans-serif" font-size="46" fill="#23445c">ILLUSTRATIVE PANORAMA · REPLACE WITH A REAL 360° PHOTO</text>
+</svg>
