@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # BBD Campus Navigator (Vite + vanilla JavaScript)
 
 This project migrates the supplied single-file `bbd-campus-map.html` prototype into Vite and JavaScript modules while preserving its existing campus scene, building selection, event status, event creation, rule-based assistant, help-desk ticket form, simulated satellite-style ground and animated guide robot.
@@ -30,3 +31,6 @@ npm run preview
 The original building layout, event entries, ground texture, help-desk details and the new indoor floor plan/checkpoints are samples, not verified BBD data. The 360° view uses an illustrative SVG placeholder. Do not use it for real-world wayfinding until verified floor plans, room IDs, corridor geometry, stairs/lifts, accessibility constraints and licensed panoramic images are supplied.
 
 Events and tickets are stored in `localStorage`, on the current browser/device only. There is no shared backend, user authentication, event moderation or cross-device synchronization yet. The old demo event times are relative to the time the page loads.
+=======
+# bbd-course-navigator
+>>>>>>> 266b85b655a4db4b74f1f535367966fcbc3c5830
