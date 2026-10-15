@@ -9,11 +9,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.8",
+    "express": "^5.3.0",
     "leaflet": "^1.9.4",
     "marzipano": "^0.10.2",
     "three": "^0.180.0"
   },
   "devDependencies": {
+    "heic-convert": "^2.1.0",
     "vite": "^7.1.0"
   }
 }

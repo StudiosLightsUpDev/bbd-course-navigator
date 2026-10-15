@@ -1,5 +1,4 @@
-// Wires the "Campus 3D / Floor plan + route / 360° checkpoint" buttons to their views.
-// The 3D campus (legacy-app.js) is left untouched: it is simply shown by hiding the overlay.
+// src/hybrid-ui.js
 import { initFloorMap, refreshFloorMap, routeBetween } from './floorplans/floor-map.js';
 import { createPanoramaViewer } from './panorama/viewer.js';
 
@@ -38,12 +37,11 @@ export function initHybridUI() {
       initFloorMap('floor-map', 'floor-tools');
       refreshFloorMap();
     } else if (mode === 'pano') {
-      title.textContent = '360° checkpoint';
-      foot.textContent = 'Illustrative panorama — replace with a licensed equirectangular photo.';
+      title.textContent = '360° Checkpoint Tour';
+      foot.textContent = 'Interactive 360° Campus Navigation';
       if (!panoViewer) {
         try {
           panoViewer = createPanoramaViewer(pano, (target) => {
-            // Checkpoint ids match floor-plan node ids, so keep both views in sync.
             window.dispatchEvent(new CustomEvent('checkpoint-selected', { detail: { id: target } }));
           });
         } catch (err) {
@@ -61,6 +59,5 @@ export function initHybridUI() {
   buttons.campus.classList.add('on');
   tools.style.display = 'none';
 
-  // Exposed for debugging / other modules.
   return { show, routeBetween, get mode() { return current; } };
 }
