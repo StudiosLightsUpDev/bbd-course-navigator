@@ -1,148 +1,120 @@
+// src/panorama/viewer.js
 import Marzipano from 'marzipano';
+import { campusTourScenes } from '../data/panoramas.js';
 
-// Placeholder equirectangular scenes. Replace `url` with licensed 2:1 photos.
-// A hotspot `target` that matches a scene id switches to that scene.
-export const DEFAULT_SCENES = [
-  {
-    id: 'entrance',
-    url: '/assets/panoramas/sample-campus.svg',
-    initialView: { yaw: 0, pitch: 0, fov: Math.PI / 2 },
-    hotspots: [{ yaw: 0.65, pitch: -0.05, label: 'Admin / junction →', target: 'junction' }],
-  },
-  {
-    id: 'junction',
-    url: '/assets/panoramas/sample-campus.svg',
-    initialView: { yaw: Math.PI, pitch: 0, fov: Math.PI / 2 },
-    hotspots: [{ yaw: -1.0, pitch: -0.05, label: '← Main corridor', target: 'entrance' }],
-  },
-];
+export function createPanoramaViewer(containerElement, onCheckpointSelect) {
+  if (!containerElement) return null;
 
-const IMAGE_RE = /\.(jpe?g|png|webp|svg)(\?.*)?$/i;
+  containerElement.innerHTML = '';
 
-// Preload to detect missing files / invalid formats before Marzipano touches them.
-function validateImage(url) {
-  return new Promise((resolve, reject) => {
-    if (!IMAGE_RE.test(url)) {
-      reject(new Error(`Unsupported panorama format: ${url}`));
-      return;
-    }
-    const img = new Image();
-    img.onload = () => {
-      const ratio = img.naturalWidth / img.naturalHeight;
-      if (!img.naturalWidth || Math.abs(ratio - 2) > 0.05) {
-        reject(new Error(`Panorama must be equirectangular (2:1), got ${img.naturalWidth}x${img.naturalHeight}: ${url}`));
-      } else {
-        resolve(img.naturalWidth);
-      }
-    };
-    img.onerror = () => reject(new Error(`Could not load panorama image: ${url}`));
-    img.src = url;
+  // Container styling
+  containerElement.style.position = 'relative';
+
+  const viewerOpts = {
+    controls: { mouseViewMode: 'drag', scrollZoom: true }
+  };
+
+  const viewer = new Marzipano.Viewer(containerElement, viewerOpts);
+
+  const limiter = Marzipano.RectilinearView.limit.traditional(
+    4096,
+    (40 * Math.PI) / 180,
+    (100 * Math.PI) / 180
+  );
+
+  const view = new Marzipano.RectilinearView(
+    { yaw: 0, pitch: 0, fov: (75 * Math.PI) / 180 },
+    limiter
+  );
+
+  const geometry = new Marzipano.EquirectGeometry([{ width: 4096 }]);
+
+  // Add a handy Location Dropdown Selector overlay on top right
+  const selector = document.createElement('select');
+  selector.style.cssText = `
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    z-index: 1000;
+    background: #0f172a;
+    color: #38bdf8;
+    border: 1px solid #0284c7;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    outline: none;
+  `;
+
+  Object.values(campusTourScenes).forEach(scene => {
+    const opt = document.createElement('option');
+    opt.value = scene.id;
+    opt.textContent = scene.title;
+    selector.appendChild(opt);
   });
-}
 
-export function createPanoramaViewer(element, onCheckpoint = () => {}, options = {}) {
-  if (!element) throw new Error('createPanoramaViewer: container element is required');
-  const { scenes: initialScenes = DEFAULT_SCENES, initialSceneId, onError = () => {} } = options;
+  selector.addEventListener('change', (e) => {
+    switchSceneById(e.target.value);
+  });
 
-  // Container must have a size or WebGL renders nothing.
-  if (!element.style.position && getComputedStyle(element).position === 'static') element.style.position = 'relative';
+  containerElement.appendChild(selector);
 
-  const viewer = new Marzipano.Viewer(element, { controls: { mouseViewMode: 'drag' } });
-  const defs = new Map();   // id -> definition
-  const built = new Map();  // id -> { scene, hotspots }
-  let currentId = null;
-  let switchToken = 0;
-  let destroyed = false;
+  function loadScene(sceneData) {
+    if (!sceneData) return;
+    const source = Marzipano.ImageUrlSource.fromString(sceneData.url);
+    const scene = viewer.createScene({ source, geometry, view });
 
-  const errorBox = document.createElement('div');
-  errorBox.className = 'pano-error';
-  errorBox.style.cssText = 'position:absolute;left:10px;right:10px;top:10px;z-index:5;padding:8px 10px;border-radius:8px;background:#e5484d;color:#fff;font-size:12px;display:none';
-  element.appendChild(errorBox);
-  function showError(err, sceneId) {
-    console.error('[panorama]', err);
-    errorBox.textContent = `360° view unavailable: ${err.message}`;
-    errorBox.style.display = 'block';
-    try { onError(err, sceneId); } catch (e) { console.error(e); }
-  }
+    if (sceneData.hotspots) {
+      sceneData.hotspots.forEach(spot => {
+        const element = document.createElement('div');
+        element.style.cssText = `
+          background: rgba(15, 23, 42, 0.85);
+          color: #38bdf8;
+          padding: 8px 14px;
+          border-radius: 20px;
+          border: 1px solid #38bdf8;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+          user-select: none;
+          transition: transform 0.2s ease, background 0.2s ease;
+        `;
+        element.innerHTML = `<span>➔</span> <span>${spot.label}</span>`;
 
-  const resizeObserver = typeof ResizeObserver !== 'undefined'
-    ? new ResizeObserver(() => { if (!destroyed) viewer.updateSize(); })
-    : null;
-  resizeObserver?.observe(element);
+        element.onmouseenter = () => { element.style.transform = 'scale(1.08)'; element.style.background = '#0284c7'; element.style.color = '#fff'; };
+        element.onmouseleave = () => { element.style.transform = 'scale(1.0)'; element.style.background = 'rgba(15, 23, 42, 0.85)'; element.style.color = '#38bdf8'; };
 
-  function addScene(def) {
-    if (!def || !def.id || !def.url) throw new Error('Scene needs an id and a url');
-    defs.set(def.id, def);
-  }
-  initialScenes.forEach(addScene);
+        element.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (onCheckpointSelect) onCheckpointSelect(spot.target);
+          switchSceneById(spot.target);
+        });
 
-  async function buildScene(def) {
-    const width = await validateImage(def.url);
-    const source = Marzipano.ImageUrlSource.fromString(def.url);
-    const geometry = new Marzipano.EquirectGeometry([{ width }]);
-    const limiter = Marzipano.RectilinearView.limit.traditional(Math.max(width, 1024), 120 * Math.PI / 180);
-    const view = new Marzipano.RectilinearView(def.initialView || { yaw: 0, pitch: 0, fov: Math.PI / 2 }, limiter);
-    const scene = viewer.createScene({ source, geometry, view, pinFirstLevel: true });
-    const hotspots = [];
-    for (const checkpoint of def.hotspots || []) {
-      const node = document.createElement('button');
-      node.className = 'pano-hotspot';
-      node.textContent = checkpoint.label;
-      node.type = 'button';
-      node.addEventListener('click', () => {
-        onCheckpoint(checkpoint.target);
-        if (defs.has(checkpoint.target)) switchScene(checkpoint.target);
+        scene.hotspotContainer().createHotspot(element, { yaw: spot.yaw, pitch: spot.pitch });
       });
-      hotspots.push(scene.hotspotContainer().createHotspot(node, { yaw: checkpoint.yaw, pitch: checkpoint.pitch }));
     }
-    return { scene, hotspots };
+
+    scene.switchTo({ transitionDuration: 600 });
+    selector.value = sceneData.id;
   }
 
-  async function switchScene(id, { transitionDuration = 600 } = {}) {
-    if (destroyed) return false;
-    const def = defs.get(id);
-    if (!def) {
-      showError(new Error(`Unknown scene "${id}"`), id);
-      return false;
-    }
-    const token = ++switchToken;
-    try {
-      if (!built.has(id)) built.set(id, await buildScene(def));
-      if (destroyed || token !== switchToken) return false; // superseded or destroyed meanwhile
-      errorBox.style.display = 'none';
-      built.get(id).scene.switchTo({ transitionDuration: currentId ? transitionDuration : 0 });
-      currentId = id;
-      return true;
-    } catch (err) {
-      if (!destroyed && token === switchToken) showError(err, id);
-      return false; // previous scene stays active
+  function switchSceneById(id) {
+    if (campusTourScenes[id]) {
+      loadScene(campusTourScenes[id]);
     }
   }
 
-  function destroy() {
-    if (destroyed) return;
-    destroyed = true;
-    resizeObserver?.disconnect();
-    for (const { scene } of built.values()) {
-      try { viewer.destroyScene(scene); } catch (e) { /* already gone */ }
-    }
-    built.clear();
-    defs.clear();
-    viewer.destroy(); // releases the WebGL context
-    errorBox.remove();
-    currentId = null;
-  }
-
-  const firstId = initialSceneId || initialScenes[0]?.id;
-  if (firstId) switchScene(firstId);
+  // Initial load
+  loadScene(campusTourScenes['node_07']);
 
   return {
-    viewer,
-    get scene() { return currentId ? built.get(currentId)?.scene : null; },
-    switchScene,
-    addScene,
-    getCurrentSceneId: () => currentId,
-    resize: () => { if (!destroyed) viewer.updateSize(); },
-    destroy,
+    destroy: () => viewer.destroy(),
+    loadSceneById: switchSceneById
   };
 }
